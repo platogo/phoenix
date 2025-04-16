@@ -1026,7 +1026,8 @@ var Socket = class {
       this.decode = this.defaultDecoder;
     }
     let awaitingConnectionOnPageShow = null;
-    if (phxWindow && phxWindow.addEventListener) {
+    this.disableWindowEventListeners = opts.disableWindowEventListeners || false;
+    if (!this.disableWindowEventListeners && phxWindow && phxWindow.addEventListener) {
       phxWindow.addEventListener("pagehide", (_e) => {
         if (this.conn) {
           this.disconnect();
