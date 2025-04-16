@@ -253,12 +253,14 @@ var Phoenix = (() => {
       });
       this.onClose(() => {
         this.rejoinTimer.reset();
-        if (this.socket.hasLogger()) this.socket.log("channel", `close ${this.topic} ${this.joinRef()}`);
+        if (this.socket.hasLogger())
+          this.socket.log("channel", `close ${this.topic} ${this.joinRef()}`);
         this.state = CHANNEL_STATES.closed;
         this.socket.remove(this);
       });
       this.onError((reason) => {
-        if (this.socket.hasLogger()) this.socket.log("channel", `error ${this.topic}`, reason);
+        if (this.socket.hasLogger())
+          this.socket.log("channel", `error ${this.topic}`, reason);
         if (this.isJoining()) {
           this.joinPush.reset();
         }
@@ -268,7 +270,8 @@ var Phoenix = (() => {
         }
       });
       this.joinPush.receive("timeout", () => {
-        if (this.socket.hasLogger()) this.socket.log("channel", `timeout ${this.topic} (${this.joinRef()})`, this.joinPush.timeout);
+        if (this.socket.hasLogger())
+          this.socket.log("channel", `timeout ${this.topic} (${this.joinRef()})`, this.joinPush.timeout);
         let leavePush = new Push(this, CHANNEL_EVENTS.leave, closure({}), this.timeout);
         leavePush.send();
         this.state = CHANNEL_STATES.errored;
@@ -414,7 +417,8 @@ var Phoenix = (() => {
       this.joinPush.cancelTimeout();
       this.state = CHANNEL_STATES.leaving;
       let onClose = () => {
-        if (this.socket.hasLogger()) this.socket.log("channel", `leave ${this.topic}`);
+        if (this.socket.hasLogger())
+          this.socket.log("channel", `leave ${this.topic}`);
         this.trigger(CHANNEL_EVENTS.close, "leave");
       };
       let leavePush = new Push(this, CHANNEL_EVENTS.leave, closure({}), timeout);
@@ -448,7 +452,8 @@ var Phoenix = (() => {
         return false;
       }
       if (joinRef && joinRef !== this.joinRef()) {
-        if (this.socket.hasLogger()) this.socket.log("channel", "dropping outdated message", { topic, event, payload, joinRef });
+        if (this.socket.hasLogger())
+          this.socket.log("channel", "dropping outdated message", { topic, event, payload, joinRef });
         return false;
       } else {
         return true;
@@ -786,7 +791,7 @@ var Phoenix = (() => {
   };
 
   // js/phoenix/presence.js
-  var Presence = class _Presence {
+  var Presence = class {
     constructor(channel, opts = {}) {
       let events = opts.events || { state: "presence_state", diff: "presence_diff" };
       this.state = {};
@@ -804,9 +809,9 @@ var Phoenix = (() => {
       this.channel.on(events.state, (newState) => {
         let { onJoin, onLeave, onSync } = this.caller;
         this.joinRef = this.channel.joinRef();
-        this.state = _Presence.syncState(this.state, newState, onJoin, onLeave);
+        this.state = Presence.syncState(this.state, newState, onJoin, onLeave);
         this.pendingDiffs.forEach((diff) => {
-          this.state = _Presence.syncDiff(this.state, diff, onJoin, onLeave);
+          this.state = Presence.syncDiff(this.state, diff, onJoin, onLeave);
         });
         this.pendingDiffs = [];
         onSync();
@@ -816,7 +821,7 @@ var Phoenix = (() => {
         if (this.inPendingSyncState()) {
           this.pendingDiffs.push(diff);
         } else {
-          this.state = _Presence.syncDiff(this.state, diff, onJoin, onLeave);
+          this.state = Presence.syncDiff(this.state, diff, onJoin, onLeave);
           onSync();
         }
       });
@@ -831,7 +836,7 @@ var Phoenix = (() => {
       this.caller.onSync = callback;
     }
     list(by) {
-      return _Presence.list(this.state, by);
+      return Presence.list(this.state, by);
     }
     inPendingSyncState() {
       return !this.joinRef || this.joinRef !== this.channel.joinRef();
@@ -1075,7 +1080,8 @@ var Phoenix = (() => {
         this.decode = this.defaultDecoder;
       }
       let awaitingConnectionOnPageShow = null;
-      if (phxWindow && phxWindow.addEventListener) {
+      this.disableWindowEventListeners = opts.disableWindowEventListeners || false;
+      if (!this.disableWindowEventListeners && phxWindow && phxWindow.addEventListener) {
         phxWindow.addEventListener("pagehide", (_e) => {
           if (this.conn) {
             this.disconnect();
@@ -1360,7 +1366,8 @@ var Phoenix = (() => {
       clearTimeout(this.heartbeatTimeoutTimer);
     }
     onConnOpen() {
-      if (this.hasLogger()) this.log("transport", `${this.transport.name} connected to ${this.endPointURL()}`);
+      if (this.hasLogger())
+        this.log("transport", `${this.transport.name} connected to ${this.endPointURL()}`);
       this.closeWasClean = false;
       this.disconnecting = false;
       this.establishedConnections++;
@@ -1446,7 +1453,8 @@ var Phoenix = (() => {
     }
     onConnClose(event) {
       let closeCode = event && event.code;
-      if (this.hasLogger()) this.log("transport", "close", event);
+      if (this.hasLogger())
+        this.log("transport", "close", event);
       this.triggerChanError();
       this.clearHeartbeats();
       if (!this.closeWasClean && closeCode !== 1e3) {
@@ -1458,7 +1466,8 @@ var Phoenix = (() => {
      * @private
      */
     onConnError(error) {
-      if (this.hasLogger()) this.log("transport", error);
+      if (this.hasLogger())
+        this.log("transport", error);
       let transportBefore = this.transport;
       let establishedBefore = this.establishedConnections;
       this.stateChangeCallbacks.error.forEach(([, callback]) => {
@@ -1582,7 +1591,8 @@ var Phoenix = (() => {
           this.pendingHeartbeatRef = null;
           this.heartbeatTimer = setTimeout(() => this.sendHeartbeat(), this.heartbeatIntervalMs);
         }
-        if (this.hasLogger()) this.log("receive", `${payload.status || ""} ${topic} ${event} ${ref && "(" + ref + ")" || ""}`, payload);
+        if (this.hasLogger())
+          this.log("receive", `${payload.status || ""} ${topic} ${event} ${ref && "(" + ref + ")" || ""}`, payload);
         for (let i = 0; i < this.channels.length; i++) {
           const channel = this.channels[i];
           if (!channel.isMember(topic, event, payload, join_ref)) {
@@ -1599,7 +1609,8 @@ var Phoenix = (() => {
     leaveOpenTopic(topic) {
       let dupChannel = this.channels.find((c) => c.topic === topic && (c.isJoined() || c.isJoining()));
       if (dupChannel) {
-        if (this.hasLogger()) this.log("transport", `leaving duplicate topic "${topic}"`);
+        if (this.hasLogger())
+          this.log("transport", `leaving duplicate topic "${topic}"`);
         dupChannel.leave();
       }
     }
